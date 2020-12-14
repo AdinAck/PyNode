@@ -65,6 +65,7 @@ lineStart = [0,0]
 events = None
 selectedFunc = None
 searchMousePos = (0,0)
+spawned = False
 
 # import node function
 from pynode import funcDict, nodeDict
@@ -84,7 +85,7 @@ inputNode = InputNode(x=-550)
 outputNode = OutputNode(x=400)
 
 def play():
-    global win, funcDict, fontMedium, nodeList, startPin, endPin, connectedPins, search, options, optionNode, leftClick, rightClick, mousePos, mouseButtons, connections, lineStart, fontSmall, events, selectedFunc, searchMousePos
+    global win, funcDict, fontMedium, nodeList, startPin, endPin, connectedPins, search, options, optionNode, leftClick, rightClick, mousePos, mouseButtons, connections, lineStart, fontSmall, events, selectedFunc, searchMousePos, spawned
     run = True
     while run:
         events = pg.event.get()
@@ -166,11 +167,11 @@ def play():
             if node.bounds[0] <= mousePos[0] <= node.bounds[1] and node.bounds[2] <= mousePos[1] <= node.bounds[3]:
                 if mouseButtons[0] and startPin == None:
                     node.move(node.x + mouseRel[0], node.y + mouseRel[1])
-                    nodeList.remove(node)
-                    nodeList.insert(0,node)
-                    touchingNode = True
-                    break
-                elif rightClick:
+                nodeList.remove(node)
+                nodeList.insert(0,node)
+                touchingNode = True
+                break
+                if rightClick:
                     options = True
                     optionNode = node
 
@@ -195,6 +196,13 @@ def play():
             search = True
             selectedSearch = 0
             searchResults = 0
+        elif keys[pg.K_LCTRL] and keys[pg.K_d] and not spawned:
+            selectedFunc = nodeList[0].func
+            searchMousePos = mousePos
+            spawnFromSearch()
+            spawned = True
+        elif not (keys[pg.K_LCTRL] and keys[pg.K_d]):
+            spawned = False
 
         if search:
             if keys[pg.K_ESCAPE]:

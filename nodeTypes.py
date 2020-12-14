@@ -75,8 +75,8 @@ class Node:
             text = main.fontSmall.render(self.outputs[i], True, (10,10,10))
             main.win.blit(text, (main.origin[0]+self.x+self.w-10-text.get_width(), main.origin[1]+self.y-5+50+i*25))
 
-        if self.x+self.w-20 <= main.mousePos[0] <= self.x+self.w-2 and self.y+2 <= main.mousePos[1] <= self.y+18:
-            if main.leftClick and main.startPin == None and main.nodeList[0] == self:
+        if self.x+self.w-20 <= main.mousePos[0] <= self.x+self.w-2 and self.y+2 <= main.mousePos[1] <= self.y+18 and main.nodeList[0] == self:
+            if main.leftClick and main.startPin == None:
                 main.nodeList.pop(0)
                 [main.connections.remove(c) for c in main.connections[::-1] if c[0] == self or c[2] == self]
             pg.draw.rect(main.win, (220,100,100), (main.origin[0]+self.x+self.w-20,main.origin[1]+self.y+2, 18,18))
@@ -84,10 +84,10 @@ class Node:
         else:
             xColor = (100,100,100)
 
-        main.win.blit(self.label, (main.origin[0]+self.x+10, main.origin[1]+self.y+10))
-
         pg.draw.line(main.win, xColor, (main.origin[0]+self.x+self.w-16-1, main.origin[1]+self.y+6-1), (main.origin[0]+self.x+self.w-6-1, main.origin[1]+self.y+16-1), 2)
         pg.draw.line(main.win, xColor, (main.origin[0]+self.x+self.w-16-1, main.origin[1]+self.y+16-1), (main.origin[0]+self.x+self.w-6-1, main.origin[1]+self.y+6-1), 2)
+
+        main.win.blit(self.label, (main.origin[0]+self.x+10, main.origin[1]+self.y+10))
 
 class InputNode:
     def __init__(self, x=0, y=0):
@@ -147,7 +147,7 @@ class InputNode:
         if mPos[0] <= main.mousePos[0] < mPos[0]+bSize and mPos[1] <= main.mousePos[1] <= mPos[1]+bSize:
             color = (80,80,80)
             if main.leftClick and len(self.outputs) > 0:
-                [main.connections.remove(c) for c in main.connections[::-1] if c[1] == len(self.outputs)-1]
+                [main.connections.remove(c) for c in main.connections[::-1] if c[1] == len(self.outputs)-1 and c[0] == self]
                 self.outputs.pop()
                 self.w, self.h = self.label.get_width()+75, 50+25*len(self.outputs)
         else:
@@ -238,7 +238,7 @@ class OutputNode:
         if mPos[0] <= main.mousePos[0] < mPos[0]+bSize and mPos[1] <= main.mousePos[1] <= mPos[1]+bSize:
             color = (80,80,80)
             if main.leftClick and len(self.inputs) > 0:
-                [main.connections.remove(c) for c in main.connections[::-1] if c[3] == len(self.inputs)-1]
+                [main.connections.remove(c) for c in main.connections[::-1] if c[3] == len(self.inputs)-1 and c[2] == self]
                 self.inputs.pop()
                 self.w, self.h = self.label.get_width()+75, 50+25*len(self.inputs)
         else:
@@ -265,7 +265,7 @@ class ValueNode:
         self.inputs = []
         self.outputs = []
         self.x, self.y = x, y
-        self.w, self.h = self.label.get_width()+75, 50+25*len(self.outputs)
+        self.w, self.h = self.label.get_width()+100, 50+25*len(self.outputs)
         self.bounds = [self.x, self.x+self.w, self.y, self.y+self.h]
 
         main.nodeList.insert(0, self)
@@ -306,10 +306,11 @@ class ValueNode:
                     if self.textinput.get_text() != '':
                         self.outputs[i] = self.textinput.get_text()
             main.win.blit(text, (main.origin[0]+self.x+self.w-10-text.get_width(), main.origin[1]+self.y-5+50+i*25))
+            pg.draw.rect(main.win, (40, 40, 40), (main.origin[0]+self.x+5, main.origin[1]+self.y-5+50+i*25-3, self.w-10-text.get_width()-10, 18))
 
         bSize = 20
-        mPos = self.x+self.w-8-bSize*2, self.y+8
-        pPos = self.x+self.w-8-bSize, self.y+8
+        mPos = self.x+self.w-8-24-bSize*2, self.y+8
+        pPos = self.x+self.w-8-24-bSize, self.y+8
 
 
         if mPos[0] <= main.mousePos[0] < mPos[0]+bSize and mPos[1] <= main.mousePos[1] <= mPos[1]+bSize:
@@ -317,7 +318,7 @@ class ValueNode:
             if main.leftClick and len(self.outputs) > 0:
                 [main.connections.remove(c) for c in main.connections[::-1] if c[1] == len(self.outputs)-1]
                 self.outputs.pop()
-                self.w, self.h = self.label.get_width()+75, 50+25*len(self.outputs)
+                self.w, self.h = self.label.get_width()+100, 50+25*len(self.outputs)
         else:
             color = (40,40,40)
         pg.draw.rect(main.win, color, (main.origin[0]+mPos[0], main.origin[1]+mPos[1], bSize, bSize))
@@ -326,11 +327,23 @@ class ValueNode:
             color = (80,80,80)
             if main.leftClick:
                 self.outputs.append(f'v{len(self.outputs)+1}')
-                self.w, self.h = self.label.get_width()+75, 50+25*len(self.outputs)
+                self.w, self.h = self.label.get_width()+100, 50+25*len(self.outputs)
         else:
             color = (40,40,40)
         pg.draw.rect(main.win, color, (main.origin[0]+pPos[0], main.origin[1]+pPos[1], bSize, bSize))
         pg.draw.line(main.win, (255,255,255), (main.origin[0]+pPos[0]+4, main.origin[1]+pPos[1]+bSize//2-1), (main.origin[0]+pPos[0]+14, main.origin[1]+pPos[1]+bSize//2-1), 2)
         pg.draw.line(main.win, (255,255,255), (main.origin[0]+pPos[0]+bSize//2-1, main.origin[1]+pPos[1]+4), (main.origin[0]+pPos[0]+bSize//2-1, main.origin[1]+pPos[1]+14), 2)
+
+        if self.x+self.w-20 <= main.mousePos[0] <= self.x+self.w-2 and self.y+2 <= main.mousePos[1] <= self.y+18 and main.nodeList[0] == self:
+            if main.leftClick and main.startPin == None:
+                main.nodeList.pop(0)
+                [main.connections.remove(c) for c in main.connections[::-1] if c[0] == self or c[2] == self]
+            pg.draw.rect(main.win, (220,100,100), (main.origin[0]+self.x+self.w-20,main.origin[1]+self.y+2, 18,18))
+            xColor = (255,255,255)
+        else:
+            xColor = (100,100,100)
+
+        pg.draw.line(main.win, xColor, (main.origin[0]+self.x+self.w-16-1, main.origin[1]+self.y+6-1), (main.origin[0]+self.x+self.w-6-1, main.origin[1]+self.y+16-1), 2)
+        pg.draw.line(main.win, xColor, (main.origin[0]+self.x+self.w-16-1, main.origin[1]+self.y+16-1), (main.origin[0]+self.x+self.w-6-1, main.origin[1]+self.y+6-1), 2)
 
         main.win.blit(self.label, (main.origin[0]+self.x+10, main.origin[1]+self.y+10))

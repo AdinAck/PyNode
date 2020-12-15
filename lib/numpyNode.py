@@ -10,3 +10,7 @@ def array(object, dtype=None, copy=True, order='K', subok=False, ndmin=0):
 @node(outputs=['out'])
 def zeros(shape, dtype=float, order='C'):
     return np.zeros(shape, dtype=dtype, order=order)
+
+@node(outputs=['out'])
+def ones(shape, dtype=float, order='C'):
+    return np.zeros(shape, dtype=dtype, order=order)

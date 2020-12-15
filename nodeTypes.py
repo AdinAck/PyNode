@@ -2,6 +2,7 @@ from pygame_textinput import TextInput # <- NOT made by me, a community plugin f
 import pygame as pg
 import inspect
 import main
+import time
 
 class Node:
     def __init__(self, func, x=0, y=0):
@@ -12,12 +13,21 @@ class Node:
         self.outputs = main.funcDict[func]
         signature = inspect.signature(func)
         self.defaults = list({k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}.keys())
+        self.kwargList = []
+        if 'kwargs' in self.inputs:
+            self.kwargs = True
+        else:
+            self.kwargs = False
         self.x, self.y = x, y
-        self.w, self.h = self.label.get_width()+50, 50+25*max(len(self.outputs), len(self.inputs))
+        self.updateSize()
         self.bounds = [self.x, self.x+self.w, self.y, self.y+self.h]
 
         main.nodeList.insert(0, self)
         self.color = 255,255,255
+        self.editing = -1
+
+    def updateSize(self):
+        self.w, self.h = self.label.get_width()+50, 50+25*max(len(self.outputs), len(self.inputs))
 
     def move(self, x, y):
         self.x, self.y = x, y
@@ -27,22 +37,53 @@ class Node:
         pg.draw.rect(main.win, (10,10,10), (main.origin[0]+self.x-2, main.origin[1]+self.y-2, self.w+4, self.h+4))
         pg.draw.rect(main.win, self.color, (main.origin[0]+self.x, main.origin[1]+self.y, self.w, self.h))
 
+        if len([c for c in main.connections if c[2] == self and self.inputs[c[3]] == 'args']) == len([i for i in self.inputs if i == 'args']) != 0:
+            self.inputs.insert(len(self.inputs)-self.inputs[::-1].index('args')-1, 'args')
+            self.updateSize()
+        elif len([i for i in self.inputs if i == 'args']) == 2 and len(self.inputs)-self.inputs[::-1].index('args')-1 in [c[3] for c in main.connections if c[2] == self and self.inputs[c[3]] == 'args']:
+            main.connections = [[c[0], c[1], c[2], c[3]-1] if c[2] == self and self.inputs[c[3]] == 'args' else c for c in main.connections]
+
+        if self.kwargs and 'kwargs' not in self.inputs:
+            self.inputs.append('kwargs')
+            self.updateSize()
+        elif self.kwargs and len([i for i in self.inputs if i == 'kwargs']) > 1:
+            self.inputs.pop(len(self.inputs)-self.inputs[::-1].index('kwargs')-1)
+            self.updateSize()
+
         for i in range(len(self.inputs)):
-            red = 150
-            green = 150
+            # determine if args needs to be removed
+            if not main.mouseButtons[0]:
+                tmp = [c[3] for c in main.connections if c[2] == self and self.inputs[c[3]] == 'args']
+                if self.inputs[i] == 'args' and i not in tmp and (len([i for i in self.inputs if i == 'args'])-len(tmp)) > 1:
+                    self.inputs.pop(i)
+                    self.updateSize()
+                    main.connections = [[c[0], c[1], c[2], c[3]-1] if c[2] == self and c[3] > i else c for c in main.connections]
+                    break
+            # color stuff
+            red = 100
+            green = 250
+            blue = 100
             if (self,i) not in [(c[2], c[3]) for c in main.connections]:
                 if self.inputs[i] in self.defaults:
                     red = 250
                     green = 200
+                elif self.inputs[i] == 'args':
+                    red = 50
+                    green = 150
+                    blue = 250
+                elif self.inputs[i] == 'kwargs':
+                    red = 250
+                    green = 50
+                    blue = 250
                 else:
                     red = 250
-                    green = 150
-            else:
-                green = 200
+                    green = 100
 
-            color = (red,green,150)
+            color = (red,green,blue)
+
+            # general stuff
             if self.x-10 <= main.mousePos[0] <= self.x+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10:
-                if main.mouseButtons[0] and main.startPin != (self,0,i) and (self,i) not in [(c[2],c[3]) for c in main.connections]:
+                if main.mouseButtons[0] and main.startPin != (self,0,i) and (self,i) not in [(c[2],c[3]) for c in main.connections] and self.inputs[i] != 'kwargs':
                     main.endPin = (self,0,i)
                 elif main.mouseButtons[0] and (self,i) in [(c[2],c[3]) for c in main.connections]:
                     tmp = [c for c in main.connections if (c[2],c[3]) == (self,i)][0]
@@ -54,12 +95,28 @@ class Node:
             elif main.endPin == (self,0,i):
                 main.endPin = None
             elif (self, 0, i) not in [val for key, val in main.connectedPins.items()]:
-                color = (red-50,green-50,100)
+                color = (max(0,red-50),max(0,green-50),max(0,blue-50))
 
             pg.draw.rect(main.win, color, (main.origin[0]+self.x-5, main.origin[1]+self.y-5+50+i*25, 10, 10))
-            main.win.blit(main.fontSmall.render(self.inputs[i], True, (10,10,10)), (main.origin[0]+self.x+10, main.origin[1]+self.y-5+50+i*25))
+
+            text = main.fontSmall.render(self.inputs[i], True, (10,10,10))
+            if self.inputs[i] == 'kwargs' or self.inputs[i] in self.kwargList:
+                if not self.editing == i:
+                    if self.x+10 <= main.mousePos[0] <= self.x+10+text.get_width() and self.y-5+50+i*25 <= main.mousePos[1] <= self.y-5+50+i*25+text.get_height():
+                        if main.leftClick:
+                            self.textinput = TextInput(font_family='Consolas',font_size=12, text_color=(0,0,0), initial_string=self.inputs[i])
+                            self.editing = i
+                else:
+                    text = self.textinput.get_surface()
+                    if self.textinput.update(main.events):
+                        self.editing = -1
+                        if self.textinput.get_text() != '':
+                            self.inputs[i] = self.textinput.get_text()
+                            self.kwargList.append(self.textinput.get_text())
+            main.win.blit(text, (main.origin[0]+self.x+10, main.origin[1]+self.y-5+50+i*25))
 
         for i in range(len(self.outputs)):
+            # color stuff
             color = (150,150,250)
             if self.x+self.w-10 <= main.mousePos[0] <= self.x+self.w+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10:
                 if main.mouseButtons[0] and main.startPin != (self,self.w,i):
@@ -75,6 +132,7 @@ class Node:
             text = main.fontSmall.render(self.outputs[i], True, (10,10,10))
             main.win.blit(text, (main.origin[0]+self.x+self.w-10-text.get_width(), main.origin[1]+self.y-5+50+i*25))
 
+        # general stuff
         if self.x+self.w-20 <= main.mousePos[0] <= self.x+self.w-2 and self.y+2 <= main.mousePos[1] <= self.y+18 and main.nodeList[0] == self:
             if main.leftClick and main.startPin == None:
                 main.nodeList.pop(0)

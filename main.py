@@ -24,7 +24,7 @@ def export():
                 a = ','.join(node.varNames)
                 b = '.'.join(node.func.__module__.split('.')[1:])
                 c = node.func.__name__
-                d = ', '.join([node.inputs[c[3]]+'='+c[0].varNames[c[1]]+('' if type(c[0]) == InputNode else '()') for c in connections if c[2] == node])
+                d = ', '.join([(node.inputs[c[3]]+'=' if node.inputs[c[3]] in node.defaults else '')+c[0].varNames[c[1]]+('' if type(c[0]) == InputNode else '()') for c in connections if c[2] == node])
                 if len(node.varNames) == 1:
                     f.write(f"\t{a} = lambda: {b}.{c}({d})\n")
                 elif len(node.varNames) > 1:
@@ -87,6 +87,7 @@ outputNode = OutputNode(x=400)
 def play():
     global win, funcDict, fontMedium, nodeList, startPin, endPin, connectedPins, search, options, optionNode, leftClick, rightClick, mousePos, mouseButtons, connections, lineStart, fontSmall, events, selectedFunc, searchMousePos, spawned
     run = True
+    clock = pg.time.Clock()
     while run:
         events = pg.event.get()
         for event in events:
@@ -132,6 +133,12 @@ def play():
         if not mouseButtons[0]:
             connectedPins = {}
 
+        # test for illegal kwargs connection
+        for i, c in zip(range(len(connections)), connections):
+            if c[2].inputs[c[3]] == 'kwargs':
+                connections.pop(i)
+
+
         if startPin != None:
             if mouseButtons[0]:
                 color = (255,100,100)
@@ -160,7 +167,8 @@ def play():
             startPin = None
             endPin = None
         for n in nodeList[::-1]:
-            n.render()
+            if not (origin[0]+n.x > win.get_width()+10 or origin[1]+n.y > win.get_height()+10 or origin[0]+n.x+n.w < -10 or origin[1]+n.y+n.h < -10):
+                n.render()
 
         touchingNode = False
         for node in nodeList:
@@ -170,10 +178,10 @@ def play():
                 nodeList.remove(node)
                 nodeList.insert(0,node)
                 touchingNode = True
-                break
                 if rightClick:
                     options = True
                     optionNode = node
+                break
 
         if len(nodeList) > 0:
             if not touchingNode and startPin == None:
@@ -252,7 +260,9 @@ def play():
 
             if leftClick and not (searchMousePos[0] <= mousePos[0] <= searchMousePos[0]+300 and searchMousePos[1] <= mousePos[1] <= searchMousePos[1]+40+25*searchResults):
                 search = False
+        # print(clock.get_fps())
         pg.display.update()
+        # clock.tick()
 
     pg.quit()
     exit()

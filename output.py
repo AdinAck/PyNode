@@ -1,10 +1,5 @@
-from lib import builtin, listComp, logic
+from lib import builtin
 
-def func(text, func):
-	a = lambda: builtin.lenArr(arr=text)
-	b = lambda: logic.eq(a=c(), b=a())
-	c = lambda: builtin.lenArr(arr=d())
-	d = lambda: listComp.strip(arr=text, func=func)
-	return b()
-
-print(func('32123124', lambda x: x.isdigit()))
+def func(i1, i2, i3):
+	a = lambda: builtin.list(i1, i2, i3)
+	return a()

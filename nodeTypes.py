@@ -2,14 +2,13 @@ from pygame_textinput import TextInput # <- NOT made by me, a community plugin f
 import pygame as pg
 import inspect
 import main
-import time
 
 class Node:
     def __init__(self, func, x=0, y=0):
         self.func = func
         self.name = func.__name__
         self.label = main.fontMedium.render(self.name, True, (10,10,10))
-        self.inputs = [i for i in func.__code__.co_varnames]
+        self.inputs = list(inspect.signature(func).parameters.keys())
         self.outputs = main.funcDict[func]
         signature = inspect.signature(func)
         self.defaults = list({k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}.keys())
@@ -112,6 +111,7 @@ class Node:
                         if self.textinput.get_text() != '':
                             self.inputs[i] = self.textinput.get_text()
                             self.kwargList.append(self.textinput.get_text())
+            
             main.win.blit(text, (main.origin[0]+self.x+10, main.origin[1]+self.y-5+50+i*25))
 
         for i in range(len(self.outputs)):

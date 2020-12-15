@@ -14,3 +14,19 @@ def zeros(shape, dtype=float, order='C'):
 @node(outputs=['out'])
 def ones(shape, dtype=float, order='C'):
     return np.zeros(shape, dtype=dtype, order=order)
+
+@node(outputs=['out'])
+def concatenate(*args, axis=0, out=None):
+    return np.concatenate(args, axis=axis, out=out)
+
+@node(outputs=['append'])
+def append(arr, values, axis=None):
+    return np.append(arr, values, axis=axis)
+
+@node(outputs=['out'])
+def insert(arr, obj, values, axis=None):
+    return np.insert(arr, object, values, axis=axis)
+
+@node(outputs=['out'])
+def delete(arr, obj, axis=None):
+    return np.delete(arr, obj, axis=axis)

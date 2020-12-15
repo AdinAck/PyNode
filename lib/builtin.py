@@ -7,6 +7,18 @@ name = 'builtin'
 def Value(val=0):
     return val
 
+@node(outputs=['int'])
+def int(val):
+    return builtins.int(val)
+
+@node(outputs=['float'])
+def float(val):
+    return builtins.float(val)
+
+@node(outputs=['type'])
+def type(obj):
+    return builtins.type(obj)
+
 @node(outputs=['len'])
 def lenArr(arr):
     return len(arr)
@@ -26,7 +38,3 @@ def list(*args):
 @node(outputs=['str'])
 def join(joiner, *args):
     return joiner.join(args)
-
-@node()
-def test(a, *args, **kwargs):
-    return

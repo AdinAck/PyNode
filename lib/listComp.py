@@ -11,6 +11,10 @@ def map(func, arr):
 def strip(arr, func):
     return [i for i in arr if func(i)]
 
+@node(outputs=['item'])
+def getItem(lst, index):
+    return lst[index]
+
 @node(outputs=['out'])
 def slice(arr, a=None, b=None):
     assert a != None or b != None, 'Only one bound can be None.'

@@ -85,12 +85,13 @@ class Node:
             if self.x-10 <= main.mousePos[0] <= self.x+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10:
                 if main.mouseButtons[0] and main.startPin != (self,0,i) and (self,i) not in [(c[2],c[3]) for c in main.connections] and self.inputs[i] != 'kwargs':
                     main.endPin = (self,0,i)
-                elif main.mouseButtons[0] and (self,i) in [(c[2],c[3]) for c in main.connections]:
+                elif main.mouseButtons[0] and main.leftClick and (self,i) in [(c[2],c[3]) for c in main.connections]:
+                    print('steal')
                     tmp = [c for c in main.connections if (c[2],c[3]) == (self,i)][0]
                     main.lineStart = tmp[0].x+tmp[0].w, tmp[0].y+50+tmp[1]*25-1
                     main.startPin = tmp[0],tmp[0].w,tmp[1]
                     main.connections.remove(tmp)
-                else:
+                elif main.mousePos and main.startPin == None or main.startPin[1] == 0:
                     main.startPin = (self,0,i)
             elif main.endPin == (self,0,i):
                 main.endPin = None
@@ -248,15 +249,15 @@ class OutputNode:
         pg.draw.rect(main.win, self.color, (main.origin[0]+self.x, main.origin[1]+self.y, self.w, self.h))
 
         for i in range(len(self.inputs)):
-            red = 150
-            green = 150
+            # color stuff
+            red = 100
+            green = 250
+            blue = 100
             if (self,i) not in [(c[2], c[3]) for c in main.connections]:
                 red = 250
-                green = 150
-            else:
-                green = 200
+                green = 100
 
-            color = (red,green,150)
+            color = (red,green,blue)
             if self.x-10 <= main.mousePos[0] <= self.x+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10:
                 if main.mouseButtons[0] and main.startPin != (self,0,i) and (self,i) not in [(c[2],c[3]) for c in main.connections]:
                     main.endPin = (self,0,i)
@@ -270,7 +271,7 @@ class OutputNode:
             elif main.endPin == (self,0,i):
                 main.endPin = None
             elif (self, 0, i) not in [val for key, val in main.connectedPins.items()]:
-                color = (red-50,green-50,100)
+                color = (max(0,red-50),max(0,green-50),max(0,blue-50))
 
             pg.draw.rect(main.win, color, (main.origin[0]+self.x-5, main.origin[1]+self.y-5+50+i*25, 10, 10))
             text = main.fontSmall.render(self.inputs[i], True, (10,10,10))

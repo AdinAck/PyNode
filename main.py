@@ -86,8 +86,9 @@ outputNode = OutputNode(x=400)
 
 def play():
     global win, funcDict, fontMedium, nodeList, startPin, endPin, connectedPins, search, options, optionNode, leftClick, rightClick, mousePos, mouseButtons, connections, lineStart, fontSmall, events, selectedFunc, searchMousePos, spawned
-    run = True
+    previousMouse = 0,0,0
     clock = pg.time.Clock()
+    run = True
     while run:
         events = pg.event.get()
         for event in events:
@@ -119,7 +120,7 @@ def play():
             else:
                 leftClick = True
 
-        elif mouseButtons[2]:
+        if mouseButtons[2]:
             if previousMouse[2]:
                 rightClick = False
             else:

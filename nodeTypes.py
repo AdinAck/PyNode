@@ -37,9 +37,10 @@ class Node:
         pg.draw.rect(main.win, (10,10,10), (main.origin[0]+self.x-2, main.origin[1]+self.y-2, self.w+4, self.h+4))
         pg.draw.rect(main.win, self.color, (main.origin[0]+self.x, main.origin[1]+self.y, self.w, self.h))
 
-        if len(self.inputs)-self.inputs[::-1].index('args')-1 in [c[3] for c in main.connections if c[2] == self and self.inputs[c[3]] == 'args']:
-            self.inputs.insert(len(self.inputs)-self.inputs[::-1].index('args')-1, 'args')
-            self.updateSize()
+        if 'args' in self.inputs:
+            if len(self.inputs)-self.inputs[::-1].index('args')-1 in [c[3] for c in main.connections if c[2] == self and self.inputs[c[3]] == 'args']:
+                self.inputs.insert(len(self.inputs)-self.inputs[::-1].index('args')-1, 'args')
+                self.updateSize()
 
         if self.kwargs and 'kwargs' not in self.inputs:
             self.inputs.append('kwargs')

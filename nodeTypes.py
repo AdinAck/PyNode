@@ -37,11 +37,9 @@ class Node:
         pg.draw.rect(main.win, (10,10,10), (main.origin[0]+self.x-2, main.origin[1]+self.y-2, self.w+4, self.h+4))
         pg.draw.rect(main.win, self.color, (main.origin[0]+self.x, main.origin[1]+self.y, self.w, self.h))
 
-        if len([c for c in main.connections if c[2] == self and self.inputs[c[3]] == 'args']) == len([i for i in self.inputs if i == 'args']) != 0:
+        if len(self.inputs)-self.inputs[::-1].index('args')-1 in [c[3] for c in main.connections if c[2] == self and self.inputs[c[3]] == 'args']:
             self.inputs.insert(len(self.inputs)-self.inputs[::-1].index('args')-1, 'args')
             self.updateSize()
-        elif len([i for i in self.inputs if i == 'args']) == 2 and len(self.inputs)-self.inputs[::-1].index('args')-1 in [c[3] for c in main.connections if c[2] == self and self.inputs[c[3]] == 'args']:
-            main.connections = [[c[0], c[1], c[2], c[3]-1] if c[2] == self and self.inputs[c[3]] == 'args' else c for c in main.connections]
 
         if self.kwargs and 'kwargs' not in self.inputs:
             self.inputs.append('kwargs')
@@ -86,7 +84,6 @@ class Node:
                 if main.mouseButtons[0] and main.startPin != (self,0,i) and (self,i) not in [(c[2],c[3]) for c in main.connections] and self.inputs[i] != 'kwargs':
                     main.endPin = (self,0,i)
                 elif main.mouseButtons[0] and main.leftClick and (self,i) in [(c[2],c[3]) for c in main.connections]:
-                    print('steal')
                     tmp = [c for c in main.connections if (c[2],c[3]) == (self,i)][0]
                     main.lineStart = tmp[0].x+tmp[0].w, tmp[0].y+50+tmp[1]*25-1
                     main.startPin = tmp[0],tmp[0].w,tmp[1]

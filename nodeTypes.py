@@ -1,5 +1,11 @@
 from pygame_textinput import TextInput # <- NOT made by me, a community plugin for pygame
-import pygame as pg
+# https://github.com/Nearoo/pygame-text-input
+# any code initializing or calling methods from a 'TextInput' object are utilizing the above resource
+
+import pygame as pg # <- NOT made by a me, a large python library for displaying real time graphics and interactive elements
+# https://www.pygame.org/wiki/about
+# any code under 'pg.' is utilizing objects, methods, and constants from the above resource
+
 import inspect
 import main
 
@@ -111,7 +117,7 @@ class Node:
                         if self.textinput.get_text() != '':
                             self.inputs[i] = self.textinput.get_text()
                             self.kwargList.append(self.textinput.get_text())
-            
+
             main.win.blit(text, (main.origin[0]+self.x+10, main.origin[1]+self.y-5+50+i*25))
 
         for i in range(len(self.outputs)):

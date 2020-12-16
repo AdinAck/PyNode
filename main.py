@@ -35,7 +35,7 @@ def export():
                     f.write(f"\t{a} = lambda: {b}.{c}({d})\n")
                 elif len(node.varNames) > 1:
                     f.write(f"\t_c{count} = lambda: {b}.{c}({d})\n")
-                    for i, o in zip(range(len(node.varNames)), node.varNames):
+                    for i, o in enumerate(node.varNames):
                         f.write(f"\t{o} = lambda: _{count}()[{i}]\n")
                     count += 1
                 usedVars.extend(node.varNames)
@@ -141,7 +141,7 @@ def play():
             connectedPins = {}
 
         # test for illegal kwargs connection
-        for i, c in zip(range(len(connections)), connections):
+        for i, c in enumerate(connections):
             if c[2].inputs[c[3]] == 'kwargs':
                 connections.pop(i)
 

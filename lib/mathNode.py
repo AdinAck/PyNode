@@ -2,6 +2,7 @@ from pynode import node, funcDict
 import builtins
 
 name = 'math'
+dependencies = ['builtins']
 
 @node(outputs=['sum'])
 def add(*args):

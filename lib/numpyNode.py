@@ -2,6 +2,7 @@ from pynode import node, funcDict
 import numpy as np
 
 name = 'np'
+dependencies = ['numpy as np']
 
 @node(outputs=['out'])
 def array(object, dtype=None, copy=True, order='K', subok=False, ndmin=0):

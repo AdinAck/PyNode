@@ -2,6 +2,7 @@ from pynode import node, funcDict
 import builtins
 
 name = 'builtin'
+dependencies = ['builtins']
 
 @node(outputs=['0'], nodeType='ValueNode')
 def Value(val=0):

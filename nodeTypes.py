@@ -11,6 +11,9 @@ import main
 
 class Node:
     def __init__(self, func, x=0, y=0):
+        self.id = main.id
+        main.idDict[self.id] = self
+        main.id += 1
         self.func = func
         self.name = func.__name__
         self.label = main.fontMedium.render(self.name, True, (10,10,10))
@@ -33,6 +36,7 @@ class Node:
 
     def updateSize(self):
         self.w, self.h = self.label.get_width()+50, 50+25*max(len(self.outputs), len(self.inputs))
+        self.bounds = [self.x, self.x+self.w, self.y, self.y+self.h]
 
     def move(self, x, y):
         self.x, self.y = x, y
@@ -153,10 +157,14 @@ class Node:
         main.win.blit(self.label, (main.origin[0]+self.x+10, main.origin[1]+self.y+10))
 
 class InputNode:
-    def __init__(self, x=0, y=0):
+    def __init__(self, func=None, x=0, y=0):
+        self.id = main.id
+        main.idDict[self.id] = self
+        main.id += 1
         self.name = "Inputs"
         self.label = main.fontMedium.render(self.name, True, (10,10,10))
-        # self.inputs = []
+        self.func = func
+        self.inputs = []
         self.outputs = []
         self.func = None
         self.x, self.y = x, y
@@ -166,6 +174,10 @@ class InputNode:
         main.nodeList.insert(0, self)
         self.color = 255,255,255
         self.editing = -1
+
+    def updateSize(self):
+        self.w, self.h = self.label.get_width()+75, 50+25*max(len(self.outputs), len(self.inputs))
+        self.bounds = [self.x, self.x+self.w, self.y, self.y+self.h]
 
     def move(self, x, y):
         self.x, self.y = x, y
@@ -231,10 +243,15 @@ class InputNode:
         main.win.blit(self.label, (main.origin[0]+self.x+10, main.origin[1]+self.y+10))
 
 class OutputNode:
-    def __init__(self, x=0, y=0):
+    def __init__(self, func=None, x=0, y=0):
+        self.id = main.id
+        main.idDict[self.id] = self
+        main.id += 1
         self.name = "Outputs"
         self.label = main.fontMedium.render(self.name, True, (10,10,10))
+        self.func = func
         self.inputs = []
+        self.outputs = []
         self.func = None
         self.x, self.y = x, y
         self.w, self.h = self.label.get_width()+75, 50+25*len(self.inputs)
@@ -243,6 +260,10 @@ class OutputNode:
         main.nodeList.insert(0, self)
         self.color = 255,255,255
         self.editing = -1
+
+    def updateSize(self):
+        self.w, self.h = self.label.get_width()+75, 50+25*max(len(self.outputs), len(self.inputs))
+        self.bounds = [self.x, self.x+self.w, self.y, self.y+self.h]
 
     def move(self, x, y):
         self.x, self.y = x, y
@@ -323,6 +344,9 @@ class OutputNode:
 
 class ValueNode:
     def __init__(self, func, x=0, y=0):
+        self.id = main.id
+        main.idDict[self.id] = self
+        main.id += 1
         self.name = "Value"
         self.label = main.fontMedium.render(self.name, True, (10,10,10))
         self.inputs = []
@@ -334,6 +358,10 @@ class ValueNode:
         main.nodeList.insert(0, self)
         self.color = 255,255,255
         self.editing = -1
+
+    def updateSize(self):
+        self.w, self.h = self.label.get_width()+100, 50+25*max(len(self.outputs), len(self.inputs))
+        self.bounds = [self.x, self.x+self.w, self.y, self.y+self.h]
 
     def move(self, x, y):
         self.x, self.y = x, y

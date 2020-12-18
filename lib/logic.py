@@ -1,6 +1,7 @@
 from pynode import node, funcDict
 
 name = 'logic'
+dependencies = []
 
 @node(outputs=['o'])
 def NOT(a):

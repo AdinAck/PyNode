@@ -1,5 +1,5 @@
 from lib import numpyNode
 
-def func(i1, i2, i3):
-	a = lambda: numpyNode.concatenate(i1, i2, i3)
+def oh_yeah(i1, i2):
+	a = lambda: numpyNode.array(i1, dtype=i2)
 	return a()

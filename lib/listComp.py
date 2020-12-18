@@ -2,6 +2,7 @@ from pynode import node, funcDict
 import builtins
 
 name = 'listComp'
+dependencies = ['builtins']
 
 @node(outputs=['out'])
 def map(func, arr):

@@ -43,7 +43,7 @@ idDict = {}
 saveName = None
 
 # import node function
-from pynode import funcDict, nodeDict
+from importNode import funcDict, nodeDict
 
 from nodeTypes import *
 
@@ -201,7 +201,7 @@ def play():
 
             for i, t, x, y, w, h in [(0, npText, npx, npy, npw, nph), (1, opText, opx, opy, opw, oph)]:
                 color = (80,80,80)
-                if x <= origin[0]+mousePos[0] <= x+w and y <= origin[1]+mousePos[1] <= y+h:
+                if x-4 <= origin[0]+mousePos[0] <= x-4+w and y-4 <= origin[1]+mousePos[1] <= y-4+h:
                     color = tuple(c+50 for c in color)
 
                     if leftClick:

@@ -1,4 +1,4 @@
-from pynode import node, funcDict
+from importNode import node, funcDict
 import numpy as np
 
 name = 'np'

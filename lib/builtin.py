@@ -1,4 +1,4 @@
-from pynode import node, funcDict
+from importNode import node, funcDict
 import builtins
 
 name = 'builtin'

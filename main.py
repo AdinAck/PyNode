@@ -61,22 +61,22 @@ outputNode = OutputNode(x=400)
 
 def openPrj(fileName):
     global nodeList, connections, saveName
-    if len(nodeList) <= 2:
-        with open(fileName, 'rb') as p:
-            load_nodeList, load_connections, saveName = pickle.load(p)
-            for nodeType, func, inputs, outputs, x, y in load_nodeList[::-1]:
-                if nodeType not in [InputNode, OutputNode]:
-                    tmp = nodeType(func)
-                elif nodeType == InputNode:
-                    tmp = inputNode
-                elif nodeType == OutputNode:
-                    tmp = outputNode
-                tmp.x, tmp.y = x, y
-                tmp.inputs = inputs
-                tmp.outputs = outputs
-                tmp.updateSize()
-            for c in load_connections:
-                connections.append([idDict[c[0]], c[1], idDict[c[2]], c[3]])
+    nodeList = [node for node in nodeList if type(node) in [InputNode, OutputNode]]
+    with open(fileName, 'rb') as p:
+        load_nodeList, load_connections, saveName = pickle.load(p)
+        for nodeType, func, inputs, outputs, x, y in load_nodeList[::-1]:
+            if nodeType not in [InputNode, OutputNode]:
+                tmp = nodeType(func)
+            elif nodeType == InputNode:
+                tmp = inputNode
+            elif nodeType == OutputNode:
+                tmp = outputNode
+            tmp.x, tmp.y = x, y
+            tmp.inputs = inputs
+            tmp.outputs = outputs
+            tmp.updateSize()
+        for c in load_connections:
+            connections.append([idDict[c[0]], c[1], idDict[c[2]], c[3]])
 
 def export(fileName, funcName, standalone, exportNode):
     count = 1
@@ -290,7 +290,7 @@ def play():
 
                 pg.draw.rect(win, (255,255,255), (origin[0]+optionNode.x, origin[1]+optionNode.y-height-pad, width, height))
 
-            if keys[pg.K_LCTRL] and keys[pg.K_SPACE]: # open search
+            if keys[pg.K_LCTRL] and keys[pg.K_SPACE] and not output: # open search
                 # initialize search pop-up
                 textinput = TextInput(font_family='Consolas',
                     font_size=16,
@@ -334,6 +334,11 @@ def play():
                     initial_string='Function_Name',
                     max_string_length=30
                 )
+
+            if keys[pg.K_LCTRL] and keys[pg.K_m]:
+                menu = True
+                output = False
+                search = False
 
             if search:
                 # render

@@ -4,9 +4,9 @@ import builtins
 name = 'builtin'
 dependencies = ['builtins']
 
-@node(outputs=['0'], nodeType='ValueNode')
-def Value(val=0):
-    return val
+@node(outputs=['0'], nodeType='ConstantNode')
+def Constant(val=None):
+    return builtins.eval(val)
 
 @node(outputs=['int'])
 def int(val):

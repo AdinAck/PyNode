@@ -346,15 +346,17 @@ class OutputNode:
 
         main.win.blit(self.label, (main.origin[0]+self.x+10, main.origin[1]+self.y+10))
 
-class ValueNode:
-    def __init__(self, func, x=0, y=0):
+class ConstantNode:
+    def __init__(self, func=None, x=0, y=0):
         self.id = main.id
         main.idDict[self.id] = self
         main.id += 1
-        self.name = "Value"
+        self.name = "Constant"
         self.label = main.fontMedium.render(self.name, True, (10,10,10))
+        self.func = func
         self.inputs = []
         self.outputs = []
+        self.values = []
         self.x, self.y = x, y
         self.w, self.h = self.label.get_width()+100, 50+25*len(self.outputs)
         self.bounds = [self.x, self.x+self.w, self.y, self.y+self.h]
@@ -362,10 +364,13 @@ class ValueNode:
         main.nodeList.insert(0, self)
         self.color = 255,255,255
         self.editing = -1
+        self.entering = -1
         self.kwargs = False
 
-    def updateSize(self):
-        self.w, self.h = self.label.get_width()+100, 50+25*max(len(self.outputs), len(self.inputs))
+    def updateSize(self, w=None):
+        if w == None:
+            w = self.label.get_width()+100
+        self.w, self.h = w, 50+25*max(len(self.outputs), len(self.inputs))
         self.bounds = [self.x, self.x+self.w, self.y, self.y+self.h]
 
     def move(self, x, y):
@@ -377,7 +382,7 @@ class ValueNode:
         pg.draw.rect(main.win, self.color, (main.origin[0]+self.x, main.origin[1]+self.y, self.w, self.h))
 
         for i in range(len(self.outputs)):
-            color = (150,150,150)
+            color = (150,150,250)
             if self.x+self.w-10 <= main.mousePos[0] <= self.x+self.w+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10 and not main.moving:
                 if main.mouseButtons[0] and main.startPin != (self,self.w,i):
                     main.endPin = (self,self.w,i)
@@ -386,7 +391,7 @@ class ValueNode:
             elif main.endPin == (self,self.w,i) and not main.moving:
                 main.endPin = None
             elif (self, self.w, i) not in [val for key, val in main.connectedPins.items()] or main.moving:
-                color = (100,100,100)
+                color = (100,100,200)
 
             pg.draw.rect(main.win, color, (main.origin[0]+self.x+self.w-5, main.origin[1]+self.y-5+50+i*25, 10, 10))
             text = main.fontSmall.render(self.outputs[i], True, (10,10,10))
@@ -402,18 +407,38 @@ class ValueNode:
                     if self.textinput.get_text() != '':
                         self.outputs[i] = self.textinput.get_text()
             main.win.blit(text, (main.origin[0]+self.x+self.w-10-text.get_width(), main.origin[1]+self.y-5+50+i*25))
-            pg.draw.rect(main.win, (40, 40, 40), (main.origin[0]+self.x+5, main.origin[1]+self.y-5+50+i*25-3, self.w-10-text.get_width()-10, 18))
+            x, y = main.origin[0]+self.x+5, main.origin[1]+self.y-5+50+i*25-3
+            w, h = self.w-10-text.get_width()-10, 18
+            pg.draw.rect(main.win, (40, 40, 40), (x, y, w, h))
+            text = main.fontSmall.render(self.values[i], True, (255,255,255))
+            if main.leftClick:
+                if x <= main.origin[0]+main.mousePos[0] <= x+w and y <= main.origin[1]+main.mousePos[1] <= y+h:
+                    self.entering = i
+                    self.textinput2 = TextInput(font_family='Consolas',
+                        font_size=12,
+                        text_color=(255,255,255),
+                        cursor_color=(255,255,255),
+                        initial_string=self.values[i]
+                    )
+            if self.entering == i:
+                text = self.textinput2.get_surface()
+                if self.textinput2.update(main.events):
+                    self.updateSize(w=max(self.label.get_width()+100, text.get_width()+50))
+                    if self.textinput2.get_text() != '':
+                        self.values[i] = self.textinput2.get_text()
+                    self.entering = -1
+            main.win.blit(text, (x+w//2-text.get_width()//2, y+2))
 
         bSize = 20
         mPos = self.x+self.w-8-24-bSize*2, self.y+8
         pPos = self.x+self.w-8-24-bSize, self.y+8
-
 
         if mPos[0] <= main.mousePos[0] < mPos[0]+bSize and mPos[1] <= main.mousePos[1] <= mPos[1]+bSize:
             color = (80,80,80)
             if main.leftClick and len(self.outputs) > 0:
                 [main.connections.remove(c) for c in main.connections[::-1] if c[1] == len(self.outputs)-1]
                 self.outputs.pop()
+                self.values.pop()
                 self.w, self.h = self.label.get_width()+100, 50+25*len(self.outputs)
         else:
             color = (40,40,40)
@@ -422,7 +447,8 @@ class ValueNode:
         if pPos[0] <= main.mousePos[0] < pPos[0]+bSize and pPos[1] <= main.mousePos[1] <= pPos[1]+bSize:
             color = (80,80,80)
             if main.leftClick:
-                self.outputs.append(f'v{len(self.outputs)+1}')
+                self.outputs.append(f'c{len(self.outputs)+1}')
+                self.values.append('0')
                 self.w, self.h = self.label.get_width()+100, 50+25*len(self.outputs)
         else:
             color = (40,40,40)

@@ -17,7 +17,7 @@ def openPrj(fileName):
         print(f"\n\nLoading {fileName}...\n")
         load_nodeList, load_connections, saveName = pickle.load(p)
         print('Loading nodes...')
-        for nodeType, func, inputs, outputs, x, y, kwargList in load_nodeList[::-1]:
+        for nodeType, func, inputs, outputs, x, y, kwargList, values in load_nodeList[::-1]:
             print(f"\n  Loading {nodeType.__name__}:")
             if func != None:
                 print(f"    Function: {func.__name__}")
@@ -36,6 +36,10 @@ def openPrj(fileName):
                 print("    Node contains kwargs:")
                 print(f"      {kwargList}")
                 tmp.kwargList = kwargList
+            if values != None:
+                print("    Node contains pre-set values:")
+                print(f"      {values}")
+                tmp.values = values
             tmp.updateSize()
         print('  Done.\n')
         print('  Loading connections...')
@@ -85,7 +89,9 @@ def export(fileName, funcName, standalone, exportNode):
                 a = ','.join(node.varNames)
                 b = '.'.join(node.func.__module__.split('.')[1:])
                 c = node.func.__name__
-                d = ', '.join([(node.inputs[c[3]]+'=' if node.inputs[c[3]] in node.defaults else '')+c[0].varNames[c[1]]+('' if type(c[0]) == InputNode else '()') for c in connections if c[2] == node])
+                d = ', '.join([(node.inputs[c[3]]+'=' if node.inputs[c[3]] in node.defaults else '')+
+                    (c[0].varNames[c[1]] if type(c[0]) != ConstantNode else c[0].values[c[1]])+
+                    ('' if type(c[0]) in [InputNode, ConstantNode] else '()') for c in connections if c[2] == node])
                 if len(node.varNames) == 1:
                     f.write(f"\t{a} = lambda: {b}.{c}({d})\n")
                 elif len(node.varNames) > 1:
@@ -94,7 +100,7 @@ def export(fileName, funcName, standalone, exportNode):
                         f.write(f"\t{o} = lambda: _{count}()[{i}]\n")
                     count += 1
 
-        f.write(f"\treturn {', '.join([c[0].varNames[c[1]]+('' if type(c[0]) == InputNode else '()') for c in connections if c[2] == outputNode])}")
+        f.write(f"\treturn {', '.join([(c[0].varNames[c[1]] if type(c[0]) != ConstantNode else c[0].values[c[1]])+('' if type(c[0]) in [InputNode, ConstantNode] else '()') for c in connections if c[2] == outputNode])}")
 
 def spawnFromSearch():
     global search, funcDict, nodeDict, selectedFunc, searchMousePos
@@ -309,7 +315,7 @@ def play():
                     win = pg.display.set_mode(size=winSize,flags=pg.RESIZABLE)
                     if saveName == '':
                         continue
-                prj = [(type(n), n.func, n.inputs, n.outputs, n.x, n.y, n.kwargList if n.kwargs else None) for n in nodeList], [[c[0].id, c[1], c[2].id, c[3]] for c in connections], saveName
+                prj = [(type(n), n.func, n.inputs, n.outputs, n.x, n.y, n.kwargList if n.kwargs else None, n.values if type(n) == ConstantNode else None) for n in nodeList], [[c[0].id, c[1], c[2].id, c[3]] for c in connections], saveName
                 with open(saveName, 'wb') as p:
                     pickle.dump(prj, p)
             elif keys[pg.K_LCTRL] and keys[pg.K_o]: # export project

@@ -118,7 +118,9 @@ class Node:
                     text = self.textinput.get_surface()
                     if self.textinput.update(main.events):
                         self.editing = -1
-                        if self.textinput.get_text() != '':
+                        if self.textinput.get_text() == '':
+                            self.inputs[i] = 'kwargs'
+                        else:
                             self.inputs[i] = self.textinput.get_text()
                             self.kwargList.append(self.textinput.get_text())
 

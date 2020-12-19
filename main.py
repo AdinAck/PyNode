@@ -10,73 +10,39 @@ from os import listdir
 from tkinter import Tk, filedialog
 import pickle
 
-Tk().withdraw()
-
-pg.init()
-
-win = pg.display.set_mode(size=(1280,720), flags=pg.RESIZABLE)
-pg.display.set_caption("PyGUI")
-
-origin = [1280//2,720//2]
-nodeList = []
-fontSmall = pg.font.SysFont('Consolas', 12)
-fontMedium = pg.font.SysFont('Consolas', 16)
-fontLarge = pg.font.SysFont('Consolas', 24)
-startPin = None
-endPin = None
-connections = []
-connectedPins = {}
-search = False
-options = False
-optionNode = None
-leftClick = False
-rightClick = False
-mousePos = (0,0)
-mouseButtons = [0,0,0]
-lineStart = [0,0]
-events = None
-selectedFunc = None
-searchMousePos = (0,0)
-spawned = False
-id = 0
-idDict = {}
-saveName = None
-
-# import node function
-from importNode import funcDict, nodeDict
-
-from nodeTypes import *
-
-# import user defined functions
-funcLib = [n[:-3] for n in listdir('lib') if '.py' in n]
-
-funcNames = {}
-
-for l in funcLib:
-    exec(f'import lib.{l}')
-    funcNames[f'lib.{l}'] = eval(f'lib.{l}.name')
-
-inputNode = InputNode(x=-550)
-outputNode = OutputNode(x=400)
-
 def openPrj(fileName):
-    global nodeList, connections, saveName
+    global nodeList, connections, saveName, inputNode, outputNode
     nodeList = [node for node in nodeList if type(node) in [InputNode, OutputNode]]
     with open(fileName, 'rb') as p:
+        print(f"\n\nLoading {fileName}...\n")
         load_nodeList, load_connections, saveName = pickle.load(p)
-        for nodeType, func, inputs, outputs, x, y in load_nodeList[::-1]:
+        print('Loading nodes...')
+        for nodeType, func, inputs, outputs, x, y, kwargList in load_nodeList[::-1]:
+            print(f"\n  Loading {nodeType.__name__}:")
+            if func != None:
+                print(f"    Function: {func.__name__}")
             if nodeType not in [InputNode, OutputNode]:
                 tmp = nodeType(func)
             elif nodeType == InputNode:
                 tmp = inputNode
             elif nodeType == OutputNode:
                 tmp = outputNode
+            print(f"    x: {x}\n    y: {y}")
+            print(f"    inputs: {inputs}\n    outputs: {outputs}")
             tmp.x, tmp.y = x, y
             tmp.inputs = inputs
             tmp.outputs = outputs
+            if kwargList != None:
+                print("    Node contains kwargs:")
+                print(f"      {kwargList}")
+                tmp.kwargList = kwargList
             tmp.updateSize()
+        print('  Done.\n')
+        print('  Loading connections...')
         for c in load_connections:
             connections.append([idDict[c[0]], c[1], idDict[c[2]], c[3]])
+        print('  Done.')
+    print('Done.')
 
 def export(fileName, funcName, standalone, exportNode):
     count = 1
@@ -138,10 +104,11 @@ def spawnFromSearch():
 def play():
     global win, origin, funcDict, fontMedium, nodeList, startPin, endPin, connectedPins, search, options, optionNode,\
         leftClick, rightClick, mousePos, mouseButtons, connections, lineStart, fontSmall, events, selectedFunc,\
-        searchMousePos, spawned, id, idDict, saveName
+        searchMousePos, spawned, id, idDict, saveName, moving, inputNode, outputNode
     previousMouse = 0,0,0
     output = False
     menu = True
+    nodeLock = None
     winSize = win.get_size()
     clock = pg.time.Clock()
     run = True
@@ -205,15 +172,22 @@ def play():
                     color = tuple(c+50 for c in color)
 
                     if leftClick:
-                        if i == 0:
-                            menu = False
-                        elif i == 1:
+                        menu = False
+                        nodeList = []
+                        connections = []
+                        id = 0
+                        idDict = {}
+
+                        inputNode = InputNode(x=-550)
+                        outputNode = OutputNode(x=400)
+
+                        if i == 1:
                             tmp = filedialog.askopenfilename(filetypes=[('PyNode Files', '*.pyn')], initialdir='')
                             # prevents glitch that locks pygame window controls
                             win = pg.display.set_mode(size=winSize,flags=pg.RESIZABLE)
                             if tmp != '':
                                 openPrj(tmp)
-                                menu = False
+
                         pg.mouse.get_rel()
                 pg.draw.rect(win, color, (x-4, y-4, w, h))
                 win.blit(t, (x, y))
@@ -221,25 +195,63 @@ def play():
             # dragging view around
             mouseRel = pg.mouse.get_rel()
 
+            # test for illegal kwargs connection
+            for i, c in enumerate(connections):
+                if type(c[2]) not in [InputNode, OutputNode]:
+                    if c[2].kwargs:
+                        if c[2].inputs[c[3]] == 'kwargs':
+                            connections.pop(i)
+
+            if not output:
+                touchingNode = False
+                moving = False
+                for node in nodeList:
+                    if node.bounds[0] <= mousePos[0] <= node.bounds[1] and node.bounds[2] <= mousePos[1] <= node.bounds[3] or nodeLock == node:
+                        if startPin != None:
+                            if startPin[0] == node:
+                                tmp = False
+                            elif len(connectedPins) in [0,2]:
+                                tmp = True
+                        else:
+                            tmp = True
+                        if mouseButtons[0] and tmp:
+                            if leftClick:
+                                nodeLock = node
+                            moving = True
+                            node.move(node.x + mouseRel[0], node.y + mouseRel[1])
+                            nodeList.remove(node)
+                            nodeList.insert(0,node)
+                        touchingNode = True
+                        if rightClick:
+                            options = True
+                            optionNode = node
+                        break
+
+                if len(nodeList) > 0:
+                    if not touchingNode and startPin == None:
+                        if mouseButtons[0]:
+                            origin[0] += mouseRel[0]
+                            origin[1] += mouseRel[1]
+
+            if not mouseButtons[0]:
+                nodeLock = None
+
             if not mouseButtons[0]:
                 connectedPins = {}
 
-            # test for illegal kwargs connection
-            # for i, c in enumerate(connections):
-            #     if c[2].inputs[c[3]] == 'kwargs':
-            #         connections.pop(i)
-
+            if moving:
+                startPin = None
 
             if startPin != None:
                 if mouseButtons[0]:
                     color = (255,100,100)
                     if endPin != None:
-                        if endPin[1] != startPin[1]:
+                        if (endPin[1] == 0) != (startPin[1] == 0):
                             color = (100,255,100)
                     pg.draw.line(win, color, (origin[0]+lineStart[0], origin[1]+lineStart[1]), pg.mouse.get_pos(), 4)
                 else:
                     if endPin != None:
-                        if startPin[1] != endPin[1]:
+                        if (startPin[1] == 0) != (endPin[1] == 0):
                             if startPin[1] == 0:
                                 connections.append([endPin[0], endPin[2], startPin[0], startPin[2]])
                             else:
@@ -258,28 +270,8 @@ def play():
                 startPin = None
                 endPin = None
             for n in nodeList[::-1]:
-                if not (origin[0]+n.x > win.get_width()+10 or origin[1]+n.y > win.get_height()+10 or origin[0]+n.x+n.w < -10 or origin[1]+n.y+n.h < -10):
+                if not (origin[0]+n.x > winSize[0]+10 or origin[1]+n.y > winSize[1]+10 or origin[0]+n.x+n.w < -10 or origin[1]+n.y+n.h < -10):
                     n.render()
-
-            if not output:
-                touchingNode = False
-                for node in nodeList:
-                    if node.bounds[0] <= mousePos[0] <= node.bounds[1] and node.bounds[2] <= mousePos[1] <= node.bounds[3]:
-                        if mouseButtons[0] and startPin == None:
-                            node.move(node.x + mouseRel[0], node.y + mouseRel[1])
-                        nodeList.remove(node)
-                        nodeList.insert(0,node)
-                        touchingNode = True
-                        if rightClick:
-                            options = True
-                            optionNode = node
-                        break
-
-                if len(nodeList) > 0:
-                    if not touchingNode and startPin == None:
-                        if mouseButtons[0]:
-                            origin[0] += mouseRel[0]
-                            origin[1] += mouseRel[1]
 
             if options:
                 width, height = 100, 100
@@ -317,7 +309,7 @@ def play():
                     win = pg.display.set_mode(size=winSize,flags=pg.RESIZABLE)
                     if saveName == '':
                         continue
-                prj = [(type(n), n.func, n.inputs, n.outputs, n.x, n.y) for n in nodeList], [[c[0].id, c[1], c[2].id, c[3]] for c in connections], saveName
+                prj = [(type(n), n.func, n.inputs, n.outputs, n.x, n.y, n.kwargList if n.kwargs else None) for n in nodeList], [[c[0].id, c[1], c[2].id, c[3]] for c in connections], saveName
                 with open(saveName, 'wb') as p:
                     pickle.dump(prj, p)
             elif keys[pg.K_LCTRL] and keys[pg.K_o]: # export project
@@ -474,3 +466,53 @@ def play():
 
     pg.quit()
     exit()
+
+Tk().withdraw()
+
+pg.init()
+
+win = pg.display.set_mode(size=(1280,720), flags=pg.RESIZABLE)
+pg.display.set_caption("PyGUI")
+
+origin = [1280//2,720//2]
+nodeList = []
+fontSmall = pg.font.SysFont('Consolas', 12)
+fontMedium = pg.font.SysFont('Consolas', 16)
+fontLarge = pg.font.SysFont('Consolas', 24)
+startPin = None
+endPin = None
+connections = []
+connectedPins = {}
+search = False
+options = False
+optionNode = None
+leftClick = False
+rightClick = False
+mousePos = (0,0)
+mouseButtons = [0,0,0]
+lineStart = [0,0]
+events = None
+selectedFunc = None
+searchMousePos = (0,0)
+spawned = False
+id = 0
+idDict = {}
+saveName = None
+moving = False
+
+# import node function
+from importNode import funcDict, nodeDict
+
+from nodeTypes import *
+
+# import user defined functions
+funcLib = [n[:-3] for n in listdir('lib') if '.py' in n]
+
+funcNames = {}
+
+for l in funcLib:
+    exec(f'import lib.{l}')
+    funcNames[f'lib.{l}'] = eval(f'lib.{l}.name')
+
+inputNode = InputNode(x=-550)
+outputNode = OutputNode(x=400)

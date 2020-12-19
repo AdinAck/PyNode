@@ -90,7 +90,7 @@ class Node:
             color = (red,green,blue)
 
             # general stuff
-            if self.x-10 <= main.mousePos[0] <= self.x+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10:
+            if self.x-10 <= main.mousePos[0] <= self.x+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10 and not main.moving:
                 if main.mouseButtons[0] and main.startPin != (self,0,i) and (self,i) not in [(c[2],c[3]) for c in main.connections] and self.inputs[i] != 'kwargs':
                     main.endPin = (self,0,i)
                 elif main.mouseButtons[0] and main.leftClick and (self,i) in [(c[2],c[3]) for c in main.connections]:
@@ -100,9 +100,9 @@ class Node:
                     main.connections.remove(tmp)
                 elif main.mousePos and main.startPin == None or main.startPin[1] == 0:
                     main.startPin = (self,0,i)
-            elif main.endPin == (self,0,i):
+            elif main.endPin == (self,0,i) and not main.moving:
                 main.endPin = None
-            elif (self, 0, i) not in [val for key, val in main.connectedPins.items()]:
+            elif (self, 0, i) not in [val for key, val in main.connectedPins.items()] or main.moving:
                 color = (max(0,red-50),max(0,green-50),max(0,blue-50))
 
             pg.draw.rect(main.win, color, (main.origin[0]+self.x-5, main.origin[1]+self.y-5+50+i*25, 10, 10))
@@ -127,14 +127,14 @@ class Node:
         for i in range(len(self.outputs)):
             # color stuff
             color = (150,150,250)
-            if self.x+self.w-10 <= main.mousePos[0] <= self.x+self.w+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10:
+            if self.x+self.w-10 <= main.mousePos[0] <= self.x+self.w+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10 and not main.moving:
                 if main.mouseButtons[0] and main.startPin != (self,self.w,i):
                     main.endPin = (self,self.w,i)
                 else:
                     main.startPin = (self,self.w,i)
-            elif main.endPin == (self,self.w,i):
+            elif main.endPin == (self,self.w,i) and not main.moving:
                 main.endPin = None
-            elif (self, self.w, i) not in [val for key, val in main.connectedPins.items()]:
+            elif (self, self.w, i) not in [val for key, val in main.connectedPins.items()] or main.moving:
                 color = (100,100,200)
 
             pg.draw.rect(main.win, color, (main.origin[0]+self.x+self.w-5, main.origin[1]+self.y-5+50+i*25, 10, 10))
@@ -174,6 +174,7 @@ class InputNode:
         main.nodeList.insert(0, self)
         self.color = 255,255,255
         self.editing = -1
+        self.kwargs = False
 
     def updateSize(self):
         self.w, self.h = self.label.get_width()+75, 50+25*max(len(self.outputs), len(self.inputs))
@@ -189,14 +190,14 @@ class InputNode:
 
         for i in range(len(self.outputs)):
             color = (150,150,250)
-            if self.x+self.w-10 <= main.mousePos[0] <= self.x+self.w+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10:
+            if self.x+self.w-10 <= main.mousePos[0] <= self.x+self.w+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10 and not main.moving:
                 if main.mouseButtons[0] and main.startPin != (self,self.w,i):
                     main.endPin = (self,self.w,i)
                 else:
                     main.startPin = (self,self.w,i)
-            elif main.endPin == (self,self.w,i):
+            elif main.endPin == (self,self.w,i) and not main.moving:
                 main.endPin = None
-            elif (self, self.w, i) not in [val for key, val in main.connectedPins.items()]:
+            elif (self, self.w, i) not in [val for key, val in main.connectedPins.items()] or main.moving:
                 color = (100,100,200)
 
             pg.draw.rect(main.win, color, (main.origin[0]+self.x+self.w-5, main.origin[1]+self.y-5+50+i*25, 10, 10))
@@ -260,6 +261,7 @@ class OutputNode:
         main.nodeList.insert(0, self)
         self.color = 255,255,255
         self.editing = -1
+        self.kwargs = False
 
     def updateSize(self):
         self.w, self.h = self.label.get_width()+75, 50+25*max(len(self.outputs), len(self.inputs))
@@ -283,7 +285,7 @@ class OutputNode:
                 green = 100
 
             color = (red,green,blue)
-            if self.x-10 <= main.mousePos[0] <= self.x+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10:
+            if self.x-10 <= main.mousePos[0] <= self.x+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10 and not main.moving:
                 if main.mouseButtons[0] and main.startPin != (self,0,i) and (self,i) not in [(c[2],c[3]) for c in main.connections]:
                     main.endPin = (self,0,i)
                 elif main.mouseButtons[0] and (self,i) in [(c[2],c[3]) for c in main.connections]:
@@ -293,9 +295,9 @@ class OutputNode:
                     main.connections.remove(tmp)
                 else:
                     main.startPin = (self,0,i)
-            elif main.endPin == (self,0,i):
+            elif main.endPin == (self,0,i) and not main.moving:
                 main.endPin = None
-            elif (self, 0, i) not in [val for key, val in main.connectedPins.items()]:
+            elif (self, 0, i) not in [val for key, val in main.connectedPins.items()] or main.moving:
                 color = (max(0,red-50),max(0,green-50),max(0,blue-50))
 
             pg.draw.rect(main.win, color, (main.origin[0]+self.x-5, main.origin[1]+self.y-5+50+i*25, 10, 10))
@@ -358,6 +360,7 @@ class ValueNode:
         main.nodeList.insert(0, self)
         self.color = 255,255,255
         self.editing = -1
+        self.kwargs = False
 
     def updateSize(self):
         self.w, self.h = self.label.get_width()+100, 50+25*max(len(self.outputs), len(self.inputs))
@@ -373,14 +376,14 @@ class ValueNode:
 
         for i in range(len(self.outputs)):
             color = (150,150,150)
-            if self.x+self.w-10 <= main.mousePos[0] <= self.x+self.w+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10:
+            if self.x+self.w-10 <= main.mousePos[0] <= self.x+self.w+10 and self.y+50+i*25-10 <= main.mousePos[1] <= self.y+50+i*25+10 and not main.moving:
                 if main.mouseButtons[0] and main.startPin != (self,self.w,i):
                     main.endPin = (self,self.w,i)
                 else:
                     main.startPin = (self,self.w,i)
-            elif main.endPin == (self,self.w,i):
+            elif main.endPin == (self,self.w,i) and not main.moving:
                 main.endPin = None
-            elif (self, self.w, i) not in [val for key, val in main.connectedPins.items()]:
+            elif (self, self.w, i) not in [val for key, val in main.connectedPins.items()] or main.moving:
                 color = (100,100,100)
 
             pg.draw.rect(main.win, color, (main.origin[0]+self.x+self.w-5, main.origin[1]+self.y-5+50+i*25, 10, 10))
